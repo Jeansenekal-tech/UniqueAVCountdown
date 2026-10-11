@@ -46,11 +46,16 @@ jobs:
           ditto -c -k --keepParent "build/Unique AV Countdown.app" "build/$NAME"
           echo "ZIP=build/$NAME" >> "$GITHUB_ENV"
 
+      - name: Make DMG
+        run: ./make_dmg.sh "${VERSION:-build-${{ github.run_number }}}"
+
       - name: Keep build for download
         uses: actions/upload-artifact@v4
         with:
           name: UniqueAVCountdown
-          path: ${{ env.ZIP }}
+          path: |
+            ${{ env.ZIP }}
+            ${{ env.DMG }}
 
       - name: Publish release
         if: github.event_name == 'workflow_dispatch'
@@ -58,7 +63,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           NOTES="${{ github.event.inputs.notes }}"
-          gh release create "v$VERSION" "$ZIP" \
-            --title "Unique AV Countdown $VERSION" \
-            --notes "${NOTES:-Version $VERSION}" \
-            --target "${{ github.sha }}"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            # Release already exists: replace its files with this build.
+            gh release upload "v$VERSION" "$DMG" "$ZIP" --clobber
+          else
+            gh release create "v$VERSION" "$DMG" "$ZIP" \
+              --title "Unique AV Countdown $VERSION" \
+              --notes "${NOTES:-Version $VERSION}" \
+              --target "${{ github.sha }}"
+          fi

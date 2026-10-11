@@ -11,7 +11,7 @@ cd UniqueAVCountdown
 ./build_app.sh
 ```
 
-This makes `build/Unique AV Countdown.app` (universal, Apple Silicon + Intel). Drag it to Applications. The first time, right-click → **Open** because it's not notarised.
+This makes `build/Unique AV Countdown.app` (universal, Apple Silicon + Intel). Drag it to Applications. Run `./make_dmg.sh` afterwards for a drag-to-install `.dmg`. The first time, right-click → **Open** because it's not notarised.
 
 To work on the code, double-click `Package.swift` to open it in Xcode, pick the *UniqueAVCountdown* scheme and *My Mac*, and press ⌘R.
 

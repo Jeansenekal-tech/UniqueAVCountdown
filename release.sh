@@ -29,6 +29,8 @@ BUILD=$(( $(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" Info.plist) + 1 
 
 ./build_app.sh
 
+./make_dmg.sh "$VERSION"
+DMG="build/UniqueAVCountdown-$VERSION.dmg"
 ZIP="build/UniqueAVCountdown-$VERSION.zip"
 echo "▸ Zipping to $ZIP"
 rm -f "$ZIP"
@@ -36,12 +38,12 @@ ditto -c -k --keepParent "build/Unique AV Countdown.app" "$ZIP"
 
 if command -v gh >/dev/null 2>&1; then
     echo "▸ Publishing release v$VERSION to github.com/$REPO"
-    gh release create "v$VERSION" "$ZIP" --repo "$REPO" --title "Unique AV Countdown $VERSION" \
+    gh release create "v$VERSION" "$DMG" "$ZIP" --repo "$REPO" --title "Unique AV Countdown $VERSION" \
         --notes "${NOTES:-Version $VERSION}"
     echo "✓ Released. Installed copies will offer the update next time they open."
 else
-    echo "✓ Built $ZIP"
+    echo "✓ Built $DMG and $ZIP"
     echo "  Now on github.com/$REPO → Releases → Draft a new release:"
-    echo "  tag v$VERSION, attach the zip, add notes, Publish."
+    echo "  tag v$VERSION, attach the DMG and zip, add notes, Publish."
 fi
 echo "  Remember to commit the version change in GitHub Desktop."

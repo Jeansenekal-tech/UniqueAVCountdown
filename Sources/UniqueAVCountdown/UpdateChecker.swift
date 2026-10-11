@@ -104,15 +104,15 @@ final class UpdateChecker: ObservableObject {
         if notes.count > 700 { notes = String(notes.prefix(700)) + "…" }
         alert.informativeText = "You have version \(Self.currentVersion)."
             + (notes.isEmpty ? "" : "\n\nWhat's new:\n\(notes)")
-            + "\n\nTo install: download it, quit this app, and drag the new app into Applications (replace the old one)."
+            + "\n\nTo install: download it, quit this app, open the DMG and drag the app onto the Applications folder (choose Replace)."
         alert.addButton(withTitle: "Download")
         alert.addButton(withTitle: "Later")
         alert.addButton(withTitle: "Skip This Version")
 
         switch alert.runModal() {
         case .alertFirstButtonReturn:
-            let asset = release.assets.first { $0.name.lowercased().hasSuffix(".zip") }
-                ?? release.assets.first { $0.name.lowercased().hasSuffix(".dmg") }
+            let asset = release.assets.first { $0.name.lowercased().hasSuffix(".dmg") }
+                ?? release.assets.first { $0.name.lowercased().hasSuffix(".zip") }
             if let link = URL(string: asset?.browser_download_url ?? release.html_url) {
                 NSWorkspace.shared.open(link)
             }
