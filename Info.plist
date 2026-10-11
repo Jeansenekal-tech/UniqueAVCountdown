@@ -31,7 +31,7 @@
     <key>NSLocalNetworkUsageDescription</key>
     <string>Unique AV Countdown accepts commands from your phone remote and from OSC controllers on your local network.</string>
     <key>UpdateGitHubRepo</key>
-    <string>YOUR-GITHUB-NAME/UniqueAVCountdown</string>
+    <string>Jeansenekal-tech/UniqueAVCountdown</string>
     <key>NSHumanReadableCopyright</key>
     <string>© Unique AV</string>
 </dict>

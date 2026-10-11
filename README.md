@@ -24,11 +24,15 @@ When the app opens, it checks your GitHub repo for a newer release. If there is 
 **One-time setup**
 
 1. Put the project on GitHub (GitHub Desktop → *Add Existing Repository* → *Publish*). The repo must be **public**, because the app checks without logging in.
-2. In `Info.plist`, change `YOUR-GITHUB-NAME/UniqueAVCountdown` under `UpdateGitHubRepo` to your GitHub name and repo name.
+2. `Info.plist` → `UpdateGitHubRepo` is set to `Jeansenekal-tech/UniqueAVCountdown`. Change it only if the repo moves.
 3. Install the GitHub command-line tool once: `brew install gh`, then `gh auth login`.
 4. Build and install that version on your Macs. Only copies built after step 2 know where to look.
 
-**Publishing a new version**
+**Publishing a new version (easiest, no tools needed)**
+
+On github.com/Jeansenekal-tech/UniqueAVCountdown go to **Actions → Build & Release → Run workflow**, type the new version (e.g. `1.1.0`) and what's new, and click **Run workflow**. GitHub builds the app on its own Macs (about 5 minutes) and publishes the release. Every push to `main` also gets a test build, so you can see straight away whether the code compiles.
+
+**Or from your Mac with the GitHub CLI**
 
 ```bash
 ./release.sh 1.1.0 "Added video PIP and crop"
