@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Unique AV Countdown</string>
+    <key>CFBundleDisplayName</key>
+    <string>Unique AV Countdown</string>
+    <key>CFBundleIdentifier</key>
+    <string>za.co.uniqueav.countdown</string>
+    <key>CFBundleExecutable</key>
+    <string>UniqueAVCountdown</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Unique AV Countdown shows your capture card or camera on the presenter screen next to the timer.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Unique AV Countdown accepts commands from your phone remote and from OSC controllers on your local network.</string>
+    <key>UpdateGitHubRepo</key>
+    <string>YOUR-GITHUB-NAME/UniqueAVCountdown</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© Unique AV</string>
+</dict>
+</plist>

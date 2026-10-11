@@ -1,0 +1,181 @@
+import Foundation
+
+/// The phone/tablet remote served at http://<mac-ip>:8080
+enum RemotePage {
+    static let html = #"""
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0d10">
+<title>Countdown Remote</title>
+<style>
+:root{--bg:#0b0d10;--panel:#15181d;--panel2:#1c2027;--line:#272c34;--text:#eef1f4;--dim:#8b939e;
+--accent:#3d8bff;--go:#1fb35a;--warn:#ffc733;--crit:#ff7a1a;--over:#ff3838}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
+body{padding:max(14px,env(safe-area-inset-top)) 14px calc(20px + env(safe-area-inset-bottom));max-width:680px;margin:0 auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.brand{font-weight:700;letter-spacing:.02em;font-size:13px;color:var(--dim);text-transform:uppercase}
+.conn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--over)}.dot.ok{background:var(--go)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.title{font-weight:650;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{color:var(--dim);font-size:13px;min-height:1em}
+.time{font:700 clamp(64px,22vw,128px)/1 -apple-system,"SF Pro Rounded",system-ui,sans-serif;font-variant-numeric:tabular-nums;text-align:center;margin:10px 0 6px;letter-spacing:-.02em}
+.time.warning{color:var(--warn)}.time.critical{color:var(--crit)}.time.overtime{color:var(--over)}
+.bar{height:6px;border-radius:3px;background:#ffffff1a;overflow:hidden}.bar>i{display:block;height:100%;width:0;background:var(--text);border-radius:3px;transition:width .3s linear}
+.meta{display:flex;justify-content:space-between;color:var(--dim);font-size:13px;margin-top:8px;gap:10px}
+.meta span:last-child{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:600 15px -apple-system,system-ui,sans-serif;border-radius:12px;padding:14px 8px;min-height:52px;cursor:pointer;touch-action:manipulation}
+button:active{transform:scale(.97);filter:brightness(1.2)}
+button.go{background:var(--go);border-color:transparent;color:#fff;font-size:18px}
+button.go.running{background:#d18b00}
+button.on{background:var(--warn);color:#111;border-color:transparent}
+.chips button.sel{background:var(--accent);border-color:transparent;color:#fff}
+.row{display:flex;gap:8px;margin-top:8px}.row>*{flex:1}
+label.h{display:block;font-size:12px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+input[type=text]{width:100%;font:16px -apple-system,system-ui,sans-serif;padding:13px 12px;border-radius:12px;border:1px solid var(--line);background:#0e1115;color:var(--text);outline:none}
+input[type=text]:focus{border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips button{min-height:38px;padding:8px 12px;font-size:14px;font-weight:500;border-radius:999px}
+.live{margin-top:10px;padding:10px 12px;border-radius:10px;background:#ffc73322;color:var(--warn);font-weight:600;display:none}
+ol{list-style:none;margin:0;padding:0}
+li{display:flex;align-items:center;gap:10px;padding:12px 6px;border-top:1px solid var(--line);cursor:pointer}
+li:first-child{border-top:0}
+li .n{width:22px;color:var(--dim);font-variant-numeric:tabular-nums;text-align:right;font-size:13px}
+li .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+li .d{color:var(--dim);font-variant-numeric:tabular-nums;font-size:13px}
+li.cur{background:#3d8bff1f;border-radius:10px}li.cur .n{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><div class="brand">Unique AV · Countdown</div><div class="conn"><span id="dot" class="dot"></span><span id="clock">--:--</span></div></header>
+
+<section class="card">
+  <div class="title" id="title">—</div>
+  <div class="sub" id="speaker"></div>
+  <div class="time" id="time">--:--</div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="meta"><span id="pos"></span><span id="next"></span></div>
+</section>
+
+<section class="card">
+  <div class="grid">
+    <button onclick="cmd('prev')">◀︎ Prev</button>
+    <button id="go" class="go" onclick="cmd('toggle')">Start</button>
+    <button onclick="cmd('next')">Next ▶︎</button>
+    <button onclick="cmd('sub',60)">−1 min</button>
+    <button onclick="cmd('reset')">Reset</button>
+    <button onclick="cmd('add',60)">+1 min</button>
+  </div>
+  <div class="row">
+    <button onclick="cmd('sub',10)">−10 s</button>
+    <button onclick="cmd('add',10)">+10 s</button>
+    <button id="black" onclick="cmd('blackout')">Blackout</button>
+  </div>
+</section>
+
+<section class="card" id="layoutCard">
+  <label class="h">Presenter screen layout</label>
+  <div class="chips" id="layouts" style="margin-top:0"></div>
+</section>
+
+<section class="card">
+  <label class="h" for="msg">Message to presenter</label>
+  <input id="msg" type="text" placeholder="Type a message…" enterkeyhint="send" autocomplete="off">
+  <div class="row">
+    <button onclick="sendMsg('message')">Show</button>
+    <button onclick="sendMsg('flash')">Flash</button>
+    <button onclick="cmd('message-hide')">Hide</button>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="live" id="live"></div>
+</section>
+
+<section class="card">
+  <label class="h">Rundown</label>
+  <ol id="list"></ol>
+</section>
+
+<script>
+const $ = s => document.querySelector(s);
+let lastList = '', lastChips = '', lastLayouts = '';
+
+async function cmd(c, v) {
+  let url = '/api/cmd?c=' + encodeURIComponent(c);
+  if (v !== undefined) url += '&v=' + encodeURIComponent(v);
+  try { await fetch(url, {cache: 'no-store'}); } catch (e) {}
+  poll();
+}
+function sendMsg(kind) {
+  const t = $('#msg').value.trim();
+  if (!t) return;
+  cmd(kind, t);
+}
+$('#msg').addEventListener('keydown', e => { if (e.key === 'Enter') { sendMsg('message'); e.target.blur(); } });
+
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
+
+function render(s) {
+  $('#title').textContent = s.title || '—';
+  $('#speaker').textContent = s.speaker || '';
+  const t = $('#time'); t.textContent = s.time; t.className = 'time ' + s.phase;
+  $('#bar').style.width = Math.round(s.progress * 1000) / 10 + '%';
+  $('#bar').style.background = getComputedStyle(t).color;
+  $('#clock').textContent = s.clock;
+  $('#pos').textContent = s.index >= 0 ? (s.index + 1) + ' of ' + s.segments.length : '';
+  $('#next').textContent = s.next ? 'Next: ' + s.next : 'Last segment';
+  const go = $('#go'); go.textContent = s.running ? 'Pause' : 'Start'; go.classList.toggle('running', s.running);
+  $('#black').classList.toggle('on', s.blackout);
+  const live = $('#live');
+  live.style.display = s.messageVisible ? 'block' : 'none';
+  live.textContent = 'On screen: ' + s.message;
+
+  const chipKey = JSON.stringify(s.presets);
+  if (chipKey !== lastChips) {
+    lastChips = chipKey;
+    const c = $('#chips'); c.replaceChildren();
+    s.presets.forEach(p => { const b = el('button', '', p); b.onclick = () => { $('#msg').value = p; cmd('message', p); }; c.appendChild(b); });
+  }
+  const layoutKey = JSON.stringify(s.layouts) + s.layout;
+  if (s.layouts && layoutKey !== lastLayouts) {
+    lastLayouts = layoutKey;
+    const c = $('#layouts'); c.replaceChildren();
+    s.layouts.forEach(l => {
+      const b = el('button', l.id === s.layout ? 'sel' : '', l.label);
+      b.onclick = () => cmd('layout', l.id);
+      c.appendChild(b);
+    });
+  }
+  const listKey = JSON.stringify(s.segments) + s.index;
+  if (listKey !== lastList) {
+    lastList = listKey;
+    const ol = $('#list'); ol.replaceChildren();
+    s.segments.forEach((seg, i) => {
+      const li = el('li', i === s.index ? 'cur' : '');
+      li.append(el('span', 'n', String(i + 1)), el('span', 't', seg.title), el('span', 'd', seg.length));
+      li.onclick = () => cmd('goto', i + 1);
+      ol.appendChild(li);
+    });
+  }
+}
+
+async function poll() {
+  try {
+    const r = await fetch('/api/state', {cache: 'no-store'});
+    render(await r.json());
+    $('#dot').className = 'dot ok';
+  } catch (e) { $('#dot').className = 'dot'; }
+}
+setInterval(poll, 400);
+poll();
+</script>
+</body>
+</html>
+"""#
+}

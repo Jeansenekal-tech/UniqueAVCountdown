@@ -1,0 +1,64 @@
+name: Build & Release
+
+# Every push to main: builds the app on a GitHub Mac to check it compiles.
+# Actions tab → "Build & Release" → Run workflow → enter a version: builds and publishes a release
+# that installed copies of the app will offer as an update.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "New version number, e.g. 1.1.0"
+        required: true
+      notes:
+        description: "What's new (shown in the app's update message)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          VERSION="${VERSION#v}"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Info.plist
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Point update checks at this repo
+        run: /usr/libexec/PlistBuddy -c "Set :UpdateGitHubRepo ${{ github.repository }}" Info.plist
+
+      - name: Build app
+        run: ./build_app.sh
+
+      - name: Zip app
+        run: |
+          NAME="UniqueAVCountdown-${VERSION:-build-${{ github.run_number }}}.zip"
+          ditto -c -k --keepParent "build/Unique AV Countdown.app" "build/$NAME"
+          echo "ZIP=build/$NAME" >> "$GITHUB_ENV"
+
+      - name: Keep build for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: UniqueAVCountdown
+          path: ${{ env.ZIP }}
+
+      - name: Publish release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="${{ github.event.inputs.notes }}"
+          gh release create "v$VERSION" "$ZIP" \
+            --title "Unique AV Countdown $VERSION" \
+            --notes "${NOTES:-Version $VERSION}" \
+            --target "${{ github.sha }}"
