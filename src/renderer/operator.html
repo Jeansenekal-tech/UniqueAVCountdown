@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Unique AV Countdown</title>
+<link rel="stylesheet" href="presenter.css">
+<link rel="stylesheet" href="operator.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ===================== Rundown ===================== -->
+  <aside class="rundown">
+    <div class="panel-head">
+      <h2>Rundown</h2>
+      <span class="muted small" id="rundownMeta"></span>
+    </div>
+    <ol class="seglist" id="segList"></ol>
+    <div class="toolbar">
+      <button class="icon" id="segAdd" title="Add segment">+</button>
+      <button class="icon" id="segDup" title="Duplicate">⧉</button>
+      <button class="icon" id="segDel" title="Delete">−</button>
+      <span class="grow"></span>
+      <button id="segCue" title="Load the selected segment (double-click a row does the same)">Cue</button>
+      <button id="segCueStart" title="Load and start the selected segment">Cue &amp; Start</button>
+    </div>
+    <div class="toolbar quick">
+      <span>Quick timer</span>
+      <input type="number" id="quickMin" min="1" max="600" value="5">
+      <span class="muted">min</span>
+      <span class="grow"></span>
+      <button id="quickGo">Start now</button>
+    </div>
+
+    <form class="editor" id="editor" autocomplete="off">
+      <div class="section-title">Segment</div>
+      <label class="field"><span>Title</span><input id="edTitle" type="text"></label>
+      <label class="field"><span>Speaker / subtitle</span><input id="edSpeaker" type="text"></label>
+      <label class="field"><span>Timer mode</span>
+        <select id="edMode">
+          <option value="countdown">Countdown</option>
+          <option value="countUp">Count up</option>
+          <option value="endAtTime">End at time of day</option>
+        </select>
+      </label>
+      <div class="field" id="rowDuration"><span id="durLabel">Duration</span><div class="hms" data-key="duration"></div></div>
+      <label class="field" id="rowEnd"><span>Ends at</span><input id="edEnd" type="time" step="1"></label>
+      <div class="section-title">Warnings</div>
+      <div class="field"><span>Turn yellow at</span><div class="hms" data-key="yellowAt"></div></div>
+      <div class="field"><span>Turn red at</span><div class="hms" data-key="redAt"></div></div>
+      <label class="check"><input type="checkbox" id="edAuto"> Auto-start next segment at zero</label>
+    </form>
+  </aside>
+
+  <!-- ===================== Main ===================== -->
+  <main class="main">
+    <div class="preview-wrap">
+      <div class="preview" id="preview">
+        <span class="badge" id="liveBadge">PREVIEW</span>
+      </div>
+    </div>
+
+    <div class="transport">
+      <button id="btnPrev" title="Previous segment (←)">⏮ Prev</button>
+      <button id="btnGo" class="go" title="Start / pause (Space)">▶ Start</button>
+      <button id="btnNext" title="Next segment (→)">Next ⏭</button>
+      <button id="btnReset" title="Reset (R)">↺ Reset</button>
+      <span class="sep"></span>
+      <button data-add="-60">−1:00</button>
+      <button data-add="-10">−0:10</button>
+      <button data-add="10">+0:10</button>
+      <button data-add="60">+1:00</button>
+      <span class="grow"></span>
+      <button id="btnBlackout" class="toggle" title="Blackout (B)">● Blackout</button>
+    </div>
+
+    <div class="stats">
+      <div><small>Elapsed</small><b id="stElapsed">00:00</b></div>
+      <div><small>Remaining</small><b id="stRemaining">—</b></div>
+      <div><small>Segment</small><b id="stSegment">—</b></div>
+      <div class="wide"><small>Next</small><b id="stNext">—</b></div>
+      <div class="right"><small>Time of day</small><b id="stClock">--:--</b></div>
+    </div>
+
+    <div class="panels">
+      <div class="stack">
+        <!-- Message -->
+        <section class="box">
+          <h3>Presenter message</h3>
+          <div class="msgrow">
+            <input type="text" id="msgText" placeholder="Message to presenter…">
+            <button id="msgShow">Show</button>
+            <button id="msgFlash">Flash</button>
+            <button id="msgHide">Hide</button>
+          </div>
+          <div class="chips" id="presetChips"></div>
+          <div class="status"><i class="dot" id="msgDot"></i><span id="msgStatus">No message on screen</span></div>
+        </section>
+
+        <!-- Video -->
+        <section class="box">
+          <h3>Video input (PIP)</h3>
+          <div class="formrow">
+            <label>Source</label>
+            <select id="vidSource"></select>
+            <button class="icon" id="vidRefresh" title="Refresh the list of capture devices, screens and windows">⟳</button>
+            <button class="icon" id="vidRestart" title="Restart the current input">⚡</button>
+          </div>
+          <div class="formrow" id="vidFormatRow">
+            <label>Format</label>
+            <select id="vidFormat">
+              <option value="">Auto (1080p if available)</option>
+              <option value="3840x2160@30">3840×2160 @ 30</option>
+              <option value="1920x1080@60">1920×1080 @ 60</option>
+              <option value="1920x1080@50">1920×1080 @ 50</option>
+              <option value="1920x1080@30">1920×1080 @ 30</option>
+              <option value="1280x720@60">1280×720 @ 60</option>
+              <option value="1280x720@30">1280×720 @ 30</option>
+            </select>
+          </div>
+          <div class="hint" id="vidScreenHint" hidden>
+            Screens &amp; windows need Screen Recording permission: click ⟳ to ask, or
+            <button id="vidAllow" class="small">Open Settings…</button>
+          </div>
+          <div class="status"><i class="dot" id="vidDot"></i><span id="vidStatus">No video input</span><span class="grow"></span><span class="muted" id="vidRes"></span></div>
+          <hr>
+          <div class="formrow">
+            <label>Layout</label>
+            <select id="vidLayout"></select>
+          </div>
+          <div class="formrow" id="vidPipRow">
+            <label>Corner</label>
+            <select id="vidCorner">
+              <option value="topLeft">Top left</option>
+              <option value="topRight">Top right</option>
+              <option value="bottomLeft">Bottom left</option>
+              <option value="bottomRight">Bottom right</option>
+            </select>
+            <label class="inline">Size</label>
+            <input type="range" id="vidPipSize" min="0.15" max="0.6" step="0.01">
+          </div>
+          <div class="formrow" id="vidSplitRow">
+            <label>Video width</label>
+            <input type="range" id="vidSplit" min="0.3" max="0.85" step="0.01">
+          </div>
+          <div class="formrow">
+            <label></label>
+            <button id="vidCropBtn">Crop…</button>
+            <span class="muted small" id="vidCropInfo"></span>
+          </div>
+          <div class="crop" id="cropPanel" hidden>
+            <p class="muted small">Show only part of the source, e.g. just the notes area of PowerPoint's Presenter View.</p>
+            <div class="croprow"><span>Left</span><input type="range" min="0" max="0.5" step="0.01" data-crop="cropLeft"><output></output></div>
+            <div class="croprow"><span>Right</span><input type="range" min="0" max="0.5" step="0.01" data-crop="cropRight"><output></output></div>
+            <div class="croprow"><span>Top</span><input type="range" min="0" max="0.5" step="0.01" data-crop="cropTop"><output></output></div>
+            <div class="croprow"><span>Bottom</span><input type="range" min="0" max="0.5" step="0.01" data-crop="cropBottom"><output></output></div>
+            <label class="check"><input type="checkbox" id="vidFill"> Fill the box (crop edges instead of black bars)</label>
+            <div class="chips">
+              <button class="small" data-cropset="0.5,0,0,0">Right half</button>
+              <button class="small" data-cropset="0,0.5,0,0">Left half</button>
+              <button class="small" data-cropset="0,0,0.5,0">Bottom half</button>
+              <button class="small" data-cropset="0,0,0,0.5">Top half</button>
+              <button class="small" data-cropset="0,0,0,0">Reset</button>
+            </div>
+          </div>
+          <p class="muted small" id="vidNoSourceHint" hidden>Choose a source above. Until then the presenter screen shows the timer only.</p>
+        </section>
+      </div>
+
+      <!-- Output -->
+      <section class="box output">
+        <h3>Output &amp; remote</h3>
+        <div class="formrow">
+          <label>Screen</label>
+          <select id="displaySelect"></select>
+        </div>
+        <button id="btnPresenter" class="primary wide">Show Presenter Screen</button>
+        <hr>
+        <div class="kv"><span>📱 Phone remote</span><b id="webStatus">—</b></div>
+        <div class="urls" id="webUrls"></div>
+        <div class="kv"><span>📡 OSC</span><b id="oscStatus">—</b></div>
+        <div class="kv"><span>🎹 MIDI</span><b id="midiStatus">—</b></div>
+        <div class="kv"><span>⤓ Last remote</span><b id="lastRemote">—</b></div>
+        <hr>
+        <div class="toolbar">
+          <button id="btnOpen">Open…</button>
+          <button id="btnSave">Save…</button>
+          <span class="grow"></span>
+          <button id="btnSettings">Settings</button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== Settings ===================== -->
+<div class="modal" id="settings" hidden>
+  <div class="dialog">
+    <div class="dialog-head">
+      <div class="tabs" id="tabs">
+        <button data-tab="display" class="on">Display</button>
+        <button data-tab="remote">Remote</button>
+        <button data-tab="messages">Messages</button>
+        <button data-tab="updates">Updates</button>
+      </div>
+      <button class="icon" id="settingsClose" title="Close (Esc)">✕</button>
+    </div>
+
+    <div class="tab" data-tab="display">
+      <div class="section-title">Presenter screen shows</div>
+      <label class="check"><input type="checkbox" data-set="showTitle"> Segment title &amp; speaker</label>
+      <label class="check"><input type="checkbox" data-set="showClock"> Time of day</label>
+      <label class="check"><input type="checkbox" data-set="showNext"> Next segment</label>
+      <label class="check"><input type="checkbox" data-set="showProgress"> Progress bar</label>
+      <label class="check"><input type="checkbox" data-set="clock24h"> 24-hour clock</label>
+      <div class="formrow"><label>Timer size</label><input type="range" min="0.5" max="1.3" step="0.05" data-set="fontScale"><output id="fontScaleOut"></output></div>
+      <div class="section-title">Behaviour</div>
+      <label class="check"><input type="checkbox" data-set="overtimeCountUp"> Count up in overtime (+00:12)</label>
+      <label class="check"><input type="checkbox" data-set="flashOnOvertime"> Flash red in overtime</label>
+      <label class="check"><input type="checkbox" data-set="soundOnWarning"> Play sound at yellow / red warnings</label>
+      <label class="check"><input type="checkbox" data-set="soundOnZero"> Play sound at zero</label>
+      <label class="check"><input type="checkbox" data-set="startOnNext"> Keep running when pressing Next / Prev</label>
+    </div>
+
+    <div class="tab" data-tab="remote" hidden>
+      <div class="section-title">Phone / tablet remote (web)</div>
+      <label class="check"><input type="checkbox" data-set="webEnabled"> Enable web remote</label>
+      <div class="formrow"><label>HTTP port</label><input type="number" min="1024" max="65535" data-set="webPort" class="num"></div>
+      <div class="urls" id="settingsUrls"></div>
+      <p class="muted small">Open the address in Safari or Chrome on any phone on the same network.</p>
+      <div class="section-title">OSC (Companion, Stream Deck, TouchOSC, QLab)</div>
+      <label class="check"><input type="checkbox" data-set="oscEnabled"> Enable OSC</label>
+      <div class="formrow"><label>UDP port</label><input type="number" min="1024" max="65535" data-set="oscPort" class="num"></div>
+      <pre class="code">/timer/start  /timer/pause  /timer/toggle  /timer/reset
+/timer/next  /timer/prev  /timer/add 60  /timer/sub 60
+/timer/goto 3  /timer/message "text"  /timer/flash
+/timer/message/hide  /timer/blackout 1|0  /timer/quick 300
+/timer/video (PIP on/off)  /timer/layout (next)  /timer/layout 1–5</pre>
+      <div class="section-title">MIDI</div>
+      <label class="check"><input type="checkbox" data-set="midiEnabled"> Enable MIDI input</label>
+      <div class="formrow"><label>Channel</label><select data-set="midiChannel" id="midiChannel"></select></div>
+      <div class="formrow"><label>First note</label><input type="number" min="0" max="114" data-set="midiBaseNote" class="num"><span class="muted" id="midiNoteName"></span></div>
+      <pre class="code" id="midiMapList"></pre>
+    </div>
+
+    <div class="tab" data-tab="messages" hidden>
+      <div class="section-title">Quick message buttons (one per line)</div>
+      <textarea id="presetsText" rows="12"></textarea>
+      <p class="muted small">These appear as one-click buttons in this window and on the phone remote.</p>
+    </div>
+
+    <div class="tab" data-tab="updates" hidden>
+      <div class="section-title">Updates</div>
+      <div class="kv"><span>This version</span><b id="appVersion">—</b></div>
+      <div class="kv"><span>Checks</span><b>github.com/Jeansenekal-tech/UniqueAVCountdown</b></div>
+      <label class="check"><input type="checkbox" data-set="checkUpdatesOnLaunch"> Check for updates when the app opens</label>
+      <div class="toolbar"><button id="btnCheckUpdates">Check now</button><span class="muted small" id="updateStatus"></span></div>
+    </div>
+  </div>
+</div>
+
+<script src="presenter-render.js"></script>
+<script src="operator.js"></script>
+</body>
+</html>

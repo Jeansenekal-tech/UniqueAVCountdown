@@ -1,15 +1,15 @@
 name: Build & Release
 
-# Every push to main: builds the app on a GitHub Mac to check it compiles.
-# Actions tab → "Build & Release" → Run workflow → enter a version: builds and publishes a release
-# that installed copies of the app will offer as an update.
+# Every push to main: builds the Mac DMG and the Windows Setup.exe, and runs a smoke test.
+# Actions tab → "Build & Release" → Run workflow → enter a version: builds both and publishes
+# a release that installed copies of the app will offer as an update.
 on:
   push:
     branches: [main]
   workflow_dispatch:
     inputs:
       version:
-        description: "New version number, e.g. 1.1.0"
+        description: "New version number, e.g. 2.1.0"
         required: true
       notes:
         description: "What's new (shown in the app's update message)"
@@ -19,55 +19,111 @@ on:
 permissions:
   contents: write
 
+env:
+  CSC_IDENTITY_AUTO_DISCOVERY: "false"
+  ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
+
 jobs:
   build:
-    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: mac
+          - os: windows-latest
+            target: win
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - name: Set version
         if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.version }}
         run: |
-          VERSION="${{ github.event.inputs.version }}"
-          VERSION="${VERSION#v}"
-          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" Info.plist
-          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ github.run_number }}" Info.plist
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          npm version "${VERSION#v}" --no-git-tag-version --allow-same-version
 
-      - name: Point update checks at this repo
-        run: /usr/libexec/PlistBuddy -c "Set :UpdateGitHubRepo ${{ github.repository }}" Info.plist
+      - name: Install
+        run: npm install --no-audit --no-fund
 
-      - name: Build app
-        run: ./build_app.sh
+      - name: Logic tests
+        run: npm test
 
-      - name: Zip app
-        run: |
-          NAME="UniqueAVCountdown-${VERSION:-build-${{ github.run_number }}}.zip"
-          ditto -c -k --keepParent "build/Unique AV Countdown.app" "build/$NAME"
-          echo "ZIP=build/$NAME" >> "$GITHUB_ENV"
+      - name: Build Mac DMG (Apple Silicon + Intel)
+        if: matrix.target == 'mac'
+        run: npm run dist:mac
 
-      - name: Make DMG
-        run: ./make_dmg.sh "${VERSION:-build-${{ github.run_number }}}"
+      - name: Build Windows installer
+        if: matrix.target == 'win'
+        run: npm run dist:win
 
-      - name: Keep build for download
+      - name: Keep installer
         uses: actions/upload-artifact@v4
         with:
-          name: UniqueAVCountdown
+          name: installer-${{ matrix.target }}
           path: |
-            ${{ env.ZIP }}
-            ${{ env.DMG }}
+            dist/*.dmg
+            dist/*-Setup.exe
+          if-no-files-found: error
 
+  smoke:
+    # Starts the app on a virtual screen, opens the presenter screen and takes screenshots.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq xvfb >/dev/null
+          npm install --no-audit --no-fund
+      - name: Run app smoke test
+        env:
+          UAV_SMOKE_TEST: "1"
+          UAV_SMOKE_DIR: ${{ github.workspace }}/smoke
+        run: xvfb-run -a -s "-screen 0 1920x1080x24" npx electron . --no-sandbox --disable-gpu
+      - name: Publish screenshots to the ci-smoke branch
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          [ -d smoke ] || exit 0
+          cd smoke
+          git init -q -b ci-smoke
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          echo "${{ github.sha }}" > commit.txt
+          git add -A && git commit -qm "Smoke test for ${{ github.sha }}"
+          git push -qf "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" ci-smoke
+
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: [build, smoke]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
       - name: Publish release
-        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION_IN: ${{ github.event.inputs.version }}
+          NOTES: ${{ github.event.inputs.notes }}
         run: |
-          NOTES="${{ github.event.inputs.notes }}"
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
-            # Release already exists: replace its files with this build.
-            gh release upload "v$VERSION" "$DMG" "$ZIP" --clobber
+          VERSION="${VERSION_IN#v}"
+          ls -la out
+          if gh release view "v$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "v$VERSION" out/* --clobber --repo "${{ github.repository }}"
           else
-            gh release create "v$VERSION" "$DMG" "$ZIP" \
+            gh release create "v$VERSION" out/* \
+              --repo "${{ github.repository }}" \
               --title "Unique AV Countdown $VERSION" \
               --notes "${NOTES:-Version $VERSION}" \
               --target "${{ github.sha }}"

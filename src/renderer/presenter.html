@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Presenter</title>
+<link rel="stylesheet" href="presenter.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; cursor: none; }
+  #root { position: fixed; inset: 0; }
+  /* With only one screen the presenter opens as a small window: drag anywhere to move it. */
+  body.windowed { cursor: default; -webkit-app-region: drag; }
+  body.windowed::after {
+    content: "Presenter screen · drag to move · Esc to close";
+    position: fixed; left: 50%; top: 6px; transform: translateX(-50%);
+    font: 12px -apple-system, "Segoe UI", system-ui, sans-serif; color: rgba(255,255,255,.55);
+    background: rgba(0,0,0,.55); padding: 3px 10px; border-radius: 99px; opacity: 0; transition: opacity .2s;
+    pointer-events: none; z-index: 10;
+  }
+  body.windowed:hover::after { opacity: 1; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  // The operator window draws into this page; let it know we're ready.
+  try { if (window.opener && window.opener.presenterReady) window.opener.presenterReady(window); } catch (e) {}
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.body.classList.contains('windowed')) window.close();
+  });
+</script>
+</body>
+</html>

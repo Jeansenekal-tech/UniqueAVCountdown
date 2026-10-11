@@ -1,0 +1,71 @@
+{
+  "name": "unique-av-countdown",
+  "productName": "Unique AV Countdown",
+  "version": "2.0.0",
+  "description": "Stage and event countdown timer with presenter screen, video PIP and phone/OSC/MIDI remote",
+  "main": "src/main/main.js",
+  "author": "Unique AV",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node scripts/test.js",
+    "dist:mac": "electron-builder --mac --universal --publish never",
+    "dist:win": "electron-builder --win --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "za.co.uniqueav.countdown",
+    "productName": "Unique AV Countdown",
+    "copyright": "© Unique AV",
+    "directories": {
+      "output": "dist",
+      "buildResources": "assets"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "afterPack": "scripts/afterPack.js",
+    "publish": null,
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["universal"] }],
+      "artifactName": "UniqueAVCountdown-${version}.${ext}",
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "identity": null,
+      "hardenedRuntime": false,
+      "minimumSystemVersion": "11.0",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Unique AV Countdown shows your capture card or camera on the presenter screen next to the timer.",
+        "NSMicrophoneUsageDescription": "Some capture cards present audio and video together; audio is not recorded.",
+        "NSLocalNetworkUsageDescription": "Unique AV Countdown accepts commands from your phone remote and from OSC controllers on your local network."
+      }
+    },
+    "dmg": {
+      "title": "Unique AV Countdown",
+      "contents": [
+        { "x": 140, "y": 190 },
+        { "x": 400, "y": 190, "type": "link", "path": "/Applications" }
+      ],
+      "window": { "width": 540, "height": 380 }
+    },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "artifactName": "UniqueAVCountdown-${version}-Setup.${ext}",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Unique AV Countdown",
+      "uninstallDisplayName": "Unique AV Countdown"
+    }
+  }
+}

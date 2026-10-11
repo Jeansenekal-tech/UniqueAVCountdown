@@ -1,5 +1,6 @@
-.build/
-build/
-.swiftpm/
-*.xcodeproj/xcuserdata/
+node_modules/
+dist/
+smoke/
+.cache/
 .DS_Store
+*.log

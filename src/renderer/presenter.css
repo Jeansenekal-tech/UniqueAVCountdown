@@ -1,0 +1,129 @@
+/* Presenter screen. Used in the presenter window and the operator preview.
+   Sizes scale with the box they're in via container query units:
+   1 --u = 1/16 of a 16:9 box's width. */
+:root { --u: min(6.25cqw, 11.1111cqh); }
+
+.pv {
+  position: absolute; inset: 0; overflow: hidden;
+  background: #000; color: #fff;
+  container-type: size;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --pip: 0.34; --split: 0.66; --fs: 1;
+  --c-normal: #ffffff; --c-warning: #ffc733; --c-critical: #ff7319; --c-overtime: #ff3838;
+  --c-phase: var(--c-normal);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+.pv[data-phase="warning"]  { --c-phase: var(--c-warning); }
+.pv[data-phase="critical"] { --c-phase: var(--c-critical); }
+.pv[data-phase="overtime"] { --c-phase: var(--c-overtime); }
+.pv.blackout > * { display: none !important; }
+
+.pv .full { position: absolute; inset: 0; }
+
+/* ---------- timer panel ---------- */
+.tp { position: relative; container-type: size; background: #000; overflow: hidden; }
+.tp.flash { background: #6b0005; }
+.tp-in {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  padding: calc(var(--u) * 0.5);
+}
+.tp-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--u); min-height: 0; }
+.tp-tt { min-width: 0; }
+.tp-title {
+  font-size: calc(var(--u) * 0.6); font-weight: 600; color: rgba(255,255,255,.92);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2;
+}
+.tp-speaker { font-size: calc(var(--u) * 0.4); color: rgba(255,255,255,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: calc(var(--u) * 0.06); }
+.tp-clock { font-size: calc(var(--u) * 0.55); font-weight: 500; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.2; }
+.tp-digits {
+  flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--u) * 4.6 * var(--fs) * var(--ds, 1) * var(--fit, 1));
+  font-weight: 700; line-height: 1; letter-spacing: -0.02em; white-space: nowrap;
+  font-variant-numeric: tabular-nums; color: var(--c-phase);
+  font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+.tp-foot { display: flex; flex-direction: column; gap: calc(var(--u) * 0.18); }
+.tp-next { font-size: calc(var(--u) * 0.42); font-weight: 500; color: rgba(255,255,255,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 1.2em; }
+.tp-next .lbl { color: rgba(255,255,255,.45); margin-right: 0.7em; letter-spacing: .04em; }
+.bar { height: max(3px, calc(var(--u) * 0.14)); background: rgba(255,255,255,.12); border-radius: 999px; overflow: hidden; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--c-phase); border-radius: 999px; }
+
+.tp.compact .tp-title { font-size: calc(var(--u) * 0.75); }
+.tp.compact .tp-clock { font-size: calc(var(--u) * 0.65); }
+.tp.compact .tp-speaker, .tp.compact .tp-next { display: none; }
+.tp.compact .bar { height: max(3px, calc(var(--u) * 0.2)); }
+
+/* keep header/footer clear of a corner video box (timer + video PIP) */
+.tp.reserve-topLeft .tp-head, .tp.reserve-bottomLeft .tp-foot { padding-left: calc(var(--pip) * 100cqw + var(--u) * 0.35); }
+.tp.reserve-topRight .tp-head, .tp.reserve-bottomRight .tp-foot { padding-right: calc(var(--pip) * 100cqw + var(--u) * 0.35); }
+
+/* ---------- timer bar (under the video) ---------- */
+.tb { position: relative; container-type: size; background: #000; overflow: hidden; }
+.tb.flash { background: #6b0005; }
+.tb-in { position: absolute; inset: 0; display: flex; align-items: center; gap: 25cqh; padding: 0 25cqh; }
+.tb-side { flex: 1; min-width: 0; }
+.tb-side.right { text-align: right; }
+.tb-title { font-size: 22cqh; font-weight: 600; color: rgba(255,255,255,.92); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-speaker { font-size: 15cqh; color: rgba(255,255,255,.6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-digits {
+  font-size: calc(72cqh * var(--fs)); font-weight: 700; line-height: 1; white-space: nowrap;
+  font-variant-numeric: tabular-nums; color: var(--c-phase); letter-spacing: -0.02em;
+  font-family: "SF Pro Rounded", ui-rounded, -apple-system, "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+}
+.tb-clock { font-size: 20cqh; color: rgba(255,255,255,.7); font-variant-numeric: tabular-nums; }
+.tb-next { font-size: 14cqh; color: rgba(255,255,255,.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb .bar { position: absolute; left: 0; right: 0; top: 0; height: max(3px, 4cqh); border-radius: 0; }
+.tb .bar > i { border-radius: 0; }
+
+/* ---------- settings-driven visibility ---------- */
+.pv.hide-title .tp-tt, .pv.hide-title .tb-side.left { visibility: hidden; }
+.pv.hide-clock .tp-clock, .pv.hide-clock .tb-clock { visibility: hidden; }
+.pv.hide-next .tp-next, .pv.hide-next .tb-next { display: none; }
+.pv.hide-progress .bar { display: none; }
+
+/* ---------- video ---------- */
+.vb { position: relative; overflow: hidden; background: #000; container-type: size; }
+.vb video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.vb-ns {
+  position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+  gap: calc(var(--u) * 0.15); color: rgba(255,255,255,.45); text-align: center; padding: calc(var(--u) * 0.3);
+}
+.vb.nosignal .vb-ns { display: flex; }
+.vb-ns svg { width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); }
+.vb-ns b { font-size: calc(var(--u) * 0.45); font-weight: 600; }
+.vb-ns span { font-size: calc(var(--u) * 0.3); max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- layouts ---------- */
+.pipbox {
+  position: absolute; width: calc(var(--pip) * 100cqw); aspect-ratio: 16 / 9;
+  border-radius: calc(var(--u) * 0.15); overflow: hidden; z-index: 2;
+}
+.pipbox.tp { border: max(2px, calc(var(--u) * 0.05)) solid color-mix(in srgb, var(--c-phase) 75%, transparent); }
+.pipbox.vb { border: max(1px, calc(var(--u) * 0.03)) solid rgba(255,255,255,.3); }
+.pipbox.topLeft     { top: calc(var(--u) * 0.35); left: calc(var(--u) * 0.35); }
+.pipbox.topRight    { top: calc(var(--u) * 0.35); right: calc(var(--u) * 0.35); }
+.pipbox.bottomLeft  { bottom: calc(var(--u) * 0.35); left: calc(var(--u) * 0.35); }
+.pipbox.bottomRight { bottom: calc(var(--u) * 0.35); right: calc(var(--u) * 0.35); }
+
+.row { position: absolute; inset: 0; display: flex; }
+.row > .vb { width: calc(var(--split) * 100%); flex: none; }
+.row > .tp { flex: 1; }
+.col { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.col > .vb { flex: 1; }
+.col > .tb { height: 20%; flex: none; }
+
+/* ---------- presenter message ---------- */
+.msg {
+  position: absolute; left: calc(var(--u) * 0.5); right: calc(var(--u) * 0.5); bottom: calc(var(--u) * 0.5);
+  z-index: 5; display: none;
+  font-size: calc(var(--u) * 0.95); font-weight: 800; line-height: 1.15; text-align: center;
+  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.6);
+  background: #ffcc33; color: #000;
+  border: max(2px, calc(var(--u) * 0.06)) solid #ffcc33;
+  overflow: hidden; overflow-wrap: anywhere;
+  -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+}
+.msg.show { display: -webkit-box; }
+.msg.top { top: calc(var(--u) * 0.5); bottom: auto; }
+.msg.off { background: #000; color: #fff; }
