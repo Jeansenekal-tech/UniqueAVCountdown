@@ -45,6 +45,9 @@
         "NSLocalNetworkUsageDescription": "Unique AV Countdown accepts commands from your phone remote and from OSC controllers on your local network."
       }
     },
+    "portable": {
+      "artifactName": "UniqueAVCountdown-${version}-Portable.${ext}"
+    },
     "dmg": {
       "title": "Unique AV Countdown",
       "contents": [
@@ -54,7 +57,10 @@
       "window": { "width": 540, "height": 380 }
     },
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
       "artifactName": "UniqueAVCountdown-${version}-Setup.${ext}",
       "icon": "assets/icon.ico"
     },

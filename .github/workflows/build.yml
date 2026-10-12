@@ -69,6 +69,7 @@ jobs:
           path: |
             dist/*.dmg
             dist/*-Setup.exe
+            dist/*-Portable.exe
           if-no-files-found: error
 
   smoke:

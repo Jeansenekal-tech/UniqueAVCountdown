@@ -23,7 +23,7 @@ function isNewer(a, b) {
 function pickAsset(assets, platform) {
   const by = (ext) => (assets || []).find((a) => a.name.toLowerCase().endsWith(ext));
   if (platform === 'darwin') return by('.dmg') || by('.zip');
-  if (platform === 'win32') return by('.exe') || by('.msi') || by('.zip');
+  if (platform === 'win32') return by('-setup.exe') || by('.exe') || by('.msi') || by('.zip');
   return by('.appimage') || by('.zip');
 }
 
